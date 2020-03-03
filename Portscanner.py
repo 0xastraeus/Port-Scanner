@@ -10,13 +10,13 @@
 #
 # TODO: Add threading to make top 1000 TCP ports faster.
 
-
 import socket
 import subprocess
 from portlist import ports_1000, ports_20
 import sys
 import datetime
 import os
+
 
 # create a TCP/IP socket
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -31,28 +31,33 @@ remoteServerIP = socket.gethostbyname(server_ip)
 tn = datetime.datetime.now()
 
 
-# using subprocess to call ping command with server_ip
 def ping():
-    # nice little ping banner
+    """
+    Calls ping command on target IP and continues on to scan functions else exits
+    :return: None
+    """
     print("=" * 60)
-    print(" " * 10, f"Pinging the target IP {server_ip}")
+    print(" " * 10, f"Pinging the target IP {remoteServerIP}")
     print("=" * 60)
 
     # calling ping command via subproccess, stdout to hide output of ping
-    p = subprocess.call(f"ping {server_ip}", stdout=subprocess.PIPE, shell=True)
+    p = subprocess.call(f"ping {remoteServerIP}", stdout=subprocess.PIPE, shell=True)
     if p == 0:  # returns is up if true, else it's down
-        print(f"\n[+] {server_ip} is up\n")
+        print(f"\n[+] {remoteServerIP} is up\n")
     else:
-        print(f"[-] {server_ip} is down\n")
+        print(f"[-] {remoteServerIP} is down\n")
         print("Try using a different IP address.")
         exit()
 
 
-# scanning top 1000 TCP ports reference list contained in portlist.py file
 def scan_1000():
-    # banner
+    """
+    Scans top 1000 TCP ports provided from the portlist file and exports
+    to an CSV file with only the open ports. Will add threading for this
+    :return: None
+    """
     print("=" * 60)
-    print(" " * 10, f"Starting port scan of {server_ip}")
+    print(" " * 10, f"Starting port scan of {remoteServerIP}")
     print(" " * 10, f"Time now: {tn}")
     print("=" * 60)
 
@@ -63,6 +68,7 @@ def scan_1000():
     # if results0.csv doesn't exist this is the first filename, then increment
     with open(f"results{i}.csv", "a") as f:
         try:
+            print("\n{:<15}{:^10}{:>15}".format("PORT", "STATE", "SERVICE"))
             for port in ports_1000:  # iterating over ports from portlist file
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 result = sock.connect_ex((remoteServerIP, port))  # try connecting to ports
@@ -74,9 +80,9 @@ def scan_1000():
                         service = socket.getservbyport(port)
                     except Exception:
                         service = "unknown"
-                    print(f"[+] PORT: {port}\tSERVICE: {service}\t Open")
+                    print("{:<15}{:^10}{:>15}".format(port, "Open", service))
                 sock.close()
-            print(f"\nScan complete, exporting results to results{i}.csv")
+            print(f"\n[+] Scan complete, exporting results to results{i}.csv")
         # in case user wants to terminate the program
         except KeyboardInterrupt:
             print("User pressed Ctrl-C. Exiting")
@@ -89,9 +95,12 @@ def scan_1000():
     f.close()  # closing file
 
 
-# scanning for the top 20 TCP ports reference list contained in portlist.py
 def scan_20():
-    # banner
+    """
+    Scans the top 20 TCP ports from portlist file, this is much faster for the time being
+    until threading is added to this program.
+    :return: None
+    """
     print("=" * 60)
     print(" " * 10, f"Starting port scan of {server_ip}")
     print(" " * 10, f"Time now: {tn}")
@@ -102,6 +111,7 @@ def scan_20():
         i += 1
     with open(f"results{i}.csv", "a") as f:
         try:
+            print("\n{:<15}{:^10}{:>15}".format("PORT", "STATE", "SERVICE"))
             for port in ports_20:  # iterating over ports from portlist file
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 result = sock.connect_ex((remoteServerIP, port))  # try connecting to ports
@@ -113,9 +123,10 @@ def scan_20():
                         service = socket.getservbyport(port)
                     except Exception:
                         service = "unknown"
-                    print(f"[+] PORT: {port}\tSERVICE: {service}\t Open")
+                    print("{:<15}{:^10}{:>15}".format(port, "Open", service))
                 sock.close()
-            print(f"Scan complete, exporting to results{i}.csv")
+            print(f"\n[+] Scan complete, exporting to results{i}.csv")
+
         # in case user wants to terminate the program
         except KeyboardInterrupt:
             print("User pressed Ctrl-C, exiting now.")
@@ -128,10 +139,12 @@ def scan_20():
     f.close()  # closing file
 
 
-# making sure the user selects either 1 or 2 to proceed
-# if 1 or 2 is selected the corresponding scan function will initiate.
-# probably a better way of doing this but short on time
 def main():
+    """
+    Asks the user for the specific scan they want and calls those functions
+    :return: None
+    """
+
     print("1) Top 1000 TCP ports (SLOW: This CAN take up to 10-15 minutes)\n2) Top 20 TCP ports (FASTER)")
     scanType = input()
     if scanType == "1":
