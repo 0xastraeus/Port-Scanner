@@ -41,7 +41,7 @@ def ping():
     print("=" * 60)
 
     # calling ping command via subproccess, stdout to hide output of ping
-    p = subprocess.call(f"ping {remoteServerIP}", stdout=subprocess.PIPE, shell=True)
+    p = subprocess.call(f"ping -c 3 {remoteServerIP}", stdout=subprocess.PIPE, shell=True)
     if p == 0:  # returns is up if true, else it's down
         print(f"\n[+] {remoteServerIP} is up\n")
     else:
